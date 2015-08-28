@@ -16,33 +16,33 @@ MPKMini {
   var m_noteArray;
   var m_gateArray;
   var m_noteListeners;
-	var m_knobListeners;
+  var m_knobListeners;
   var m_defaultNoteListener;
-	var m_defaultKnobListener;
-	var m_sourceSelector;
-	var m_sourceSelectorBtn;
-	var m_selectedSource;
+  var m_defaultKnobListener;
+  var m_sourceSelector;
+  var m_sourceSelectorBtn;
+  var m_selectedSource;
   var m_connectedSource;
   var m_knobMatrix;
-	var m_knobsPerLine;
+  var m_knobsPerLine;
   var m_midiNotes;
   var m_window;
-	var m_dumpMidi;
+  var m_dumpMidi;
   var m_midi;
-	var m_synths;
+  var m_synths;
 
   /* setter for callback when this panel is disposed */
-	var >onDispose;
+  var >onDispose;
 
   *new { arg numChannels = 16, numKnobs = 8, knobsPerLine = 4;
-		if(numChannels > 16,{
-			Error("Max num channels allowed is 16. numChannels = "++numChannels).throw;
-		});
+    if(numChannels > 16,{
+      Error("Max num channels allowed is 16. numChannels = "++numChannels).throw;
+    });
     ^super.new.init(numChannels, numKnobs, knobsPerLine);
   }
 
   init { arg numChannels, numKnobs, knobsPerLine;
-		var midiSources;
+    var midiSources;
 
     m_numChannels = numChannels;
     m_numKnobs = numKnobs;
@@ -53,55 +53,55 @@ MPKMini {
 
     /* the default note lister, just prints out all the note infos */
     m_defaultNoteListener = {arg note, gate, veloc, chan;
-	    ("Default note listener. channel:"++chan++
+      ("Default note listener. channel:"++chan++
         " note:"++note++" gate:"++gate++
         " veloc:"++veloc
       ).postln;
     };
 
-		m_defaultKnobListener = {arg val, ccnum, chan;
-			("Default knob listener. channel:"++chan++
-				" control num:"++ccnum++" value:"++val).postln;
-		};
+    m_defaultKnobListener = {arg val, ccnum, chan;
+      ("Default knob listener. channel:"++chan++
+        " control num:"++ccnum++" value:"++val).postln;
+    };
 
     m_noteListeners = Array.fill(numChannels,{m_defaultNoteListener});
-		m_knobListeners = Array.fill(numChannels,{
-			Array.fill(numKnobs,{m_defaultKnobListener});
-		});
+    m_knobListeners = Array.fill(numChannels,{
+      Array.fill(numKnobs,{m_defaultKnobListener});
+    });
 
-		/* numKnobs knobs for each channel */
-		m_knobMatrix = (0 ! numKnobs) ! numChannels;
-		m_knobsPerLine = knobsPerLine;
+    /* numKnobs knobs for each channel */
+    m_knobMatrix = (0 ! numKnobs) ! numChannels;
+    m_knobsPerLine = knobsPerLine;
 
-		/* trigger listenerers for this channel */
+    /* trigger listenerers for this channel */
     super.addDependant({arg model, what, val;
       switch(what,
-				'note',{
-					m_noteListeners[m_channel].value(
-						val[0], // note
-						val[1], // gate
-						val[2],  // velocity
-						m_channel   //channel
-					);
-				},
-				'knob',{
-					/* val[0] is the cc number*/
-					m_knobListeners[m_channel][val[0]].value(
-						val[1], // cc value
-						val[0], // cc num
-						m_channel // channel
-					);
-				}
-			);
+        'note',{
+          m_noteListeners[m_channel].value(
+            val[0], // note
+            val[1], // gate
+            val[2],  // velocity
+            m_channel   //channel
+          );
+        },
+        'knob',{
+          /* val[0] is the cc number*/
+          m_knobListeners[m_channel][val[0]].value(
+            val[1], // cc value
+            val[0], // cc num
+            m_channel // channel
+          );
+        }
+      );
     });
 
 
-		m_synths = IdentityDictionary(20);
+    m_synths = IdentityDictionary(20);
     m_midiNotes = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-		m_dumpMidi = false;
+    m_dumpMidi = false;
 
-		midiSources = this.initMIDI;
-		this.initGUI(midiSources);
+    midiSources = this.initMIDI;
+    this.initGUI(midiSources);
   }
 
   *usage {
@@ -118,32 +118,32 @@ MPKMini {
     ^this;
   }
 
-	/* returns the knob bus at knobIndex of the current channel */
+  /* returns the knob bus at knobIndex of the current channel */
   knob {arg knobIndex;
-		^m_knobMatrix[m_channel][knobIndex];
+    ^m_knobMatrix[m_channel][knobIndex];
   }
 
   knob_ {arg knobIndex,val;
-		m_knobMatrix[m_channel][knobIndex] = val;
+    m_knobMatrix[m_channel][knobIndex] = val;
     super.changed('knob',[knobIndex,val]);
     ^this;
   }
 
   note {
-		^m_noteArray[m_channel];
+    ^m_noteArray[m_channel];
   }
 
   note_ {arg note, gate, velocity;
-		m_gateArray[m_channel] = gate;
-		if(gate == 1) {
-			m_noteArray[m_channel] = note;
+    m_gateArray[m_channel] = gate;
+    if(gate == 1) {
+      m_noteArray[m_channel] = note;
     };
     super.changed('note',[note,gate,velocity]);
     ^this;
   }
 
   noteListener_ {arg channel, function;
-		if(function.isNil){
+    if(function.isNil){
        m_noteListeners.wrapPut(channel,m_defaultNoteListener);
      }{
        m_noteListeners.wrapPut(channel,function);
@@ -151,35 +151,35 @@ MPKMini {
     ^this;
   }
 
-	knobListener_ {arg channel, ccnum, function;
-		if(function.isNil){
-			m_knobListeners[channel][ccnum] = m_defaultNoteListener;
+  knobListener_ {arg channel, ccnum, function;
+    if(function.isNil){
+      m_knobListeners[channel][ccnum] = m_defaultNoteListener;
      }{
       m_knobListeners[channel][ccnum] = function;
     };
-		^this;
-	}
+    ^this;
+  }
 
   connectedSource {
     ^m_connectedSource;
   }
 
-	synthOn { arg note, synth;
-		m_synths.put(note,synth);
-	}
+  synthOn { arg note, synth;
+    m_synths.put(note,synth);
+  }
 
-	synthOff {arg note;
-		m_synths.removeAt(note).set('gate',0);
-	}
+  synthOff {arg note;
+    m_synths.removeAt(note).set('gate',0);
+  }
 
   knobsPerLine_ {arg num;
-		m_knobsPerLine = num;
-		m_window.refresh;
-	}
+    m_knobsPerLine = num;
+    m_window.refresh;
+  }
 
-	enableDumpMIDI { arg dump;
-		m_dumpMidi = dump;
-	}
+  enableDumpMIDI { arg dump;
+    m_dumpMidi = dump;
+  }
 
   /* ---- GUI  ---- */
   initGUI { arg midiSources;
@@ -194,7 +194,7 @@ MPKMini {
       parent:m_window,
       bounds:(320@20),
       label:"Channel:",
-			labelWidth:45,
+      labelWidth:45,
       controlSpec:ControlSpec.new(1,16,'lin',1,1),
       action:{ arg slider;
         model.channel_(slider.value.asInteger);
@@ -224,42 +224,42 @@ MPKMini {
           model.knob_(i,knob.value);
         }
       );
-			/* new line every m_knobsPerLine knobs */
-			if(i==(m_knobsPerLine-1),{
+      /* new line every m_knobsPerLine knobs */
+      if(i==(m_knobsPerLine-1),{
         m_window.view.decorator.nextLine;
       });
       k;
     });
 
-		2.do{m_window.view.decorator.nextLine};
+    2.do{m_window.view.decorator.nextLine};
 
 
-		/* add source selection*/
-		popUpItems = midiSources.collect{arg item;
+    /* add source selection*/
+    popUpItems = midiSources.collect{arg item;
       /* upon changing the popupitems the currentSource is set to the selected */
-			(item.asSymbol -> {m_selectedSource = item; m_selectedSource.postln});
-		};
+      (item.asSymbol -> {m_selectedSource = item; m_selectedSource.postln});
+    };
 
-		m_sourceSelector = EZPopUpMenu.new(m_window,200@22,"Midi Source:",popUpItems,initAction:true,labelWidth:60);
-		m_sourceSelectorBtn = Button.new(m_window,100@22).states_([["Connect",nil,nil],["Disconnect",nil,nil]]);
-		m_sourceSelectorBtn.action = {arg button;
-			if(m_selectedSource.notNil){
-				if(button.value == 1){ // connect
-					var src = MIDIClient.sources.detect{|a| a.name == m_selectedSource};
-					MIDIIn.connect(0, src.uid);
-					m_connectedSource = src;
+    m_sourceSelector = EZPopUpMenu.new(m_window,200@22,"Midi Source:",popUpItems,initAction:true,labelWidth:60);
+    m_sourceSelectorBtn = Button.new(m_window,100@22).states_([["Connect",nil,nil],["Disconnect",nil,nil]]);
+    m_sourceSelectorBtn.action = {arg button;
+    if(m_selectedSource.notNil){
+        if(button.value == 1){ // connect
+          var src = MIDIClient.sources.detect{|a| a.name == m_selectedSource};
+          MIDIIn.connect(0, src.uid);
+          m_connectedSource = src;
           ("Connected to "++src).postln;
-				}{ // disconnect
-					var src = MIDIClient.sources.detect{|a| a.name == m_selectedSource};
-					ConfirmDialog.new("Disconnect MIDI ?", {
+        }{ // disconnect
+          var src = MIDIClient.sources.detect{|a| a.name == m_selectedSource};
+          ConfirmDialog.new("Disconnect MIDI ?", {
             MIDIIn.disconnect(0, src.uid);
             m_connectedSource = nil;
             ("Disconnected from "++src).postln;
           });
 
-				};
-			}
-		};
+        };
+      }
+    };
 
     /* a view of the midi model that updates the GUI */
     guiUpdater = {arg model,what,val;
@@ -274,23 +274,23 @@ MPKMini {
         /* write the note on the text field */
         'note', {
           {
-						if(val[1] == 1, // gate
-							{ noteText.textField.value = m_midiNotes.wrapAt(val[0]);},
-							{ if(val[0] == model.note, {noteText.textField.value = "";}) }
+            if(val[1] == 1, // gate
+              { noteText.textField.value = m_midiNotes.wrapAt(val[0]);},
+              { if(val[0] == model.note, {noteText.textField.value = "";}) }
             )
           }
         },
         /* knobs */
         'knob', {
-					{ knobs.at(val[0]).value_(val[1]); }
+          { knobs.at(val[0]).value_(val[1]); }
         }
       ).defer; // executes in GUI thread
     };
     model.addDependant(guiUpdater);
 
     m_window.onClose = {
-			this.removeDependant(guiUpdater);
-			this.dispose;
+      this.removeDependant(guiUpdater);
+      this.dispose;
     };
     m_window.front;
   }
@@ -300,8 +300,8 @@ MPKMini {
    programmatically rather than closeing the window itself
   */
   disposeGui {
-		if(m_window.notNil){
-			if(m_window.isClosed.not){
+    if(m_window.notNil){
+      if(m_window.isClosed.not){
         m_window.close;
       };
     };
@@ -313,34 +313,34 @@ MPKMini {
     var on,off,cc;
 
     MIDIClient.init;
-		// MIDIIn.connectAll;
+    // MIDIIn.connectAll;
 
     on = MIDIFunc.noteOn({ arg veloc, note, chan, src;
-			if(m_dumpMidi){
-				"midi on: ".post; [veloc, note, chan, src].postln;
-			};
+      if(m_dumpMidi){
+        "midi on: ".post; [veloc, note, chan, src].postln;
+      };
       this.note_(note,1,veloc);
     });
 
     off = MIDIFunc.noteOff({ arg veloc, note, chan, src;
       if(m_dumpMidi){
-			  "midi off: ".post; [veloc, note, chan, src].postln;
-			};
-			this.note_(note,0,veloc);
+        "midi off: ".post; [veloc, note, chan, src].postln;
+      };
+      this.note_(note,0,veloc);
     });
 
     cc = MIDIFunc.cc({arg val, num, chan, src;
       if(m_dumpMidi){
-				"cc: ".post; [val, num, chan, src].postln;
-			};
+        "cc: ".post; [val, num, chan, src].postln;
+      };
       this.knob_(num-1,val);
     });
 
     /* for freeing up later */
     m_midi = [on,off,cc];
 
-		/* returns a collection of available sources*/
-		^MIDIClient.sources.collect({arg item; item.name});
+    /* returns a collection of available sources*/
+    ^MIDIClient.sources.collect({arg item; item.name});
   }
   //
   // connectMIDI {arg source;
@@ -352,7 +352,7 @@ MPKMini {
       m_midi.do({arg item,index; item.free;});
     });
 
-		MIDIClient.disposeClient;
+    MIDIClient.disposeClient;
     "MPK Mini freed".postln;
   }
 
@@ -360,9 +360,9 @@ MPKMini {
     this.disposeGui;
     this.disposeMidi;
 
-		if(onDispose.notNil){
-			onDispose.value(this);
-			onDispose = nil;
-		};
+    if(onDispose.notNil){
+      onDispose.value(this);
+      onDispose = nil;
+    };
   }
 }
